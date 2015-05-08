@@ -210,8 +210,13 @@ def main(argv):
     plt.ylabel('Explained Variance')
 
     plt.figure()
-    plt.scatter(X2d[:,0], X2d[:,1])
+    print X2d.shape
+    X2d_robot = X2d[robot_indices, :]
+    X2d_human = X2d[human_indices, :]
+    plt.scatter(X2d_robot[:,0], X2d_robot[:,1], color='b', label = 'robot')
+    plt.scatter(X2d_human[:,0], X2d_human[:,1], color='g', label = 'human')
     plt.title('2D Projection of Bid Data')
+    plt.legend(loc='upper right')
     plt.xlabel('Principal Component 1')
     plt.ylabel('Principal Component 2')
     print time.time() - start_time
@@ -219,7 +224,7 @@ def main(argv):
     robot_sparse.data[:] = 1
     human_sparse.data[:] = 1
 
-        # Visualize the distribution of the total number of bids placed by bidder,
+    # Visualize the distribution of the total number of bids placed by bidder,
     # separated by robots vs humans.
     plt.figure()
     (n_r, bins_r, patches_r) = plt.hist(robot_sparse.sum(1), 50, alpha = 0.5,
