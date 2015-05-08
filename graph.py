@@ -197,7 +197,7 @@ def main(argv):
     plt.legend(loc='upper right')
     plt.yscale('log')
     plt.title('Distribution of Robot vs. Human Total Bids')
-    plt.xlabel('Number of Total Bids Places')
+    plt.xlabel('Number of Total Bids Placed')
     plt.ylabel('Density')
 
     # Compute the details on a SVD decomposition - the explained variance
@@ -206,9 +206,10 @@ def main(argv):
     plt.figure()
     plt.plot(variance_ratios, 'bo-')
     plt.title('Singular Values: Decreasing Explained Variance')
-    plt.figure()
     plt.xlabel('Dimension Number')
-    plt.ylabel('Explained Variance (%)')
+    plt.ylabel('Explained Variance')
+
+    plt.figure()
     plt.scatter(X2d[:,0], X2d[:,1])
     plt.title('2D Projection of Transaction Data')
     plt.xlabel('Principal Component 1')
