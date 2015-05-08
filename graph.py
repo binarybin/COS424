@@ -211,11 +211,42 @@ def main(argv):
 
     plt.figure()
     plt.scatter(X2d[:,0], X2d[:,1])
-    plt.title('2D Projection of Transaction Data')
+    plt.title('2D Projection of Bid Data')
+    plt.xlabel('Principal Component 1')
+    plt.ylabel('Principal Component 2')
+    print time.time() - start_time
+
+    robot_sparse.data[:] = 1
+    human_sparse.data[:] = 1
+
+        # Visualize the distribution of the total number of bids placed by bidder,
+    # separated by robots vs humans.
+    plt.figure()
+    (n_r, bins_r, patches_r) = plt.hist(robot_sparse.sum(1), 50, alpha = 0.5,
+                                        normed = 1, label = 'robot')
+    plt.hist(human_sparse.sum(1), bins = bins_r, alpha = 0.5,
+             normed = 1, label = 'human')
+    plt.legend(loc='upper right')
+    plt.yscale('log')
+    plt.title('Distribution of Robot vs. Human Auction Participation')
+    plt.xlabel('Number of Unique Auctions')
+    plt.ylabel('Density')
+
+    # Compute the details on a SVD decomposition - the explained variance
+    # ratios, the singular values themselves, and a 2D projection for plotting.
+    (variance_ratios, X2d) = svdData(Xsparse)
+    plt.figure()
+    plt.plot(variance_ratios, 'bo-')
+    plt.title('Singular Values: Decreasing Explained Variance')
+    plt.xlabel('Dimension Number')
+    plt.ylabel('Explained Variance')
+
+    plt.figure()
+    plt.scatter(X2d[:,0], X2d[:,1])
+    plt.title('2D Projection of Auction Data')
     plt.xlabel('Principal Component 1')
     plt.ylabel('Principal Component 2')
     print time.time() - start_time
     plt.show()
-
 if __name__ == '__main__':
     main(sys.argv[1:])
