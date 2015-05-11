@@ -28,6 +28,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 BIDS_FILE = 'bids.csv'
 BIDDER_FILE = 'train.csv'
+TEST_FILE = 'test.csv'
 
 ###############################################################################
 # Main. Read in data and run analysis.
@@ -147,8 +148,8 @@ def main(argv):
 
     # Create training and testing matrix
     bidder_indices = [bidder2id.get(item, item) for item in bidder_list]
-    Xtrain = Xsparse.tocsr()[bidder_indices, :]
-    Xtrain_reduced = doSVD(Xtrain, 15)
+    Xsparse_reduced = doSVD(Xsparse, 15)
+    Xtrain_reduced = Xsparse_reduced[bidder_indices, :]
     le = LabelEncoder()
     le.fit(labels)
     ylabel = le.transform(labels)
@@ -162,8 +163,17 @@ def main(argv):
                                              Xtrain_reduced, ylabel, 5)
 
     rf = RandomForestClassifier(n_estimators = 500)
-    (mean_fpr_rf, mean_tpr_rf) = kFoldROC('Random Forest', rf,
+    (mean_fpr_rf, mean_tpr_rf) = kFoldROC('Random Forrest', rf,
                                            Xtrain_reduced, ylabel, 5)
+
+    # Calculates test labels for submission
+    print("Running on test data...")
+    test_bidder_list = read_test_bidder(path)
+    filt_test_list = filter_replace_test(test_bidder_list, bidder2id, id2bidder)
+    test_indices = [bidder2id.get(item, item) for item in filt_test_list]
+    Xtest = Xsparse_reduced[test_indices, :]
+    rf = RandomForestClassifier(n_estimators = 500)
+    probs = rf.fit(Xtrain_reduced, ylabel).predict_proba(Xtest)
 
     # Show everything
     plt.show()
@@ -202,6 +212,9 @@ def kFoldROC(name, classifier, Xtrain, ytrain, folds):
     plt.title('Receiver Operating Charateristic for %s' % name)
     plt.legend(loc="lower right")
     return (mean_fpr, mean_tpr)
+
+def outputPredictions(classifier, Xtest, Xtrain, ytrain):
+    probas_ = classifer.fit(Xtrain, ytrain).predict_proba(Xtest)
 
 ###############################################################################
 # Helper method to run a single SVD decomposition, selecting only n
@@ -277,6 +290,18 @@ def read_bidder_labels(path):
     return (bidder_list, labels)
 
 ###############################################################################
+# A helper method to read in the test csv data file for Kaggle submission.
+# Returns one list:
+#   - list of bidders (unique ids, no duplicate)
+###############################################################################
+def read_test_bidders(path):
+    csv = df.from_csv(join(path, TEST_FILE), index_col = False)
+    bidder_mat = csv.as_matrix()
+    test_list = bidder_mat[:, 0]
+
+    return (test_list)
+
+###############################################################################
 # A helper method to create a numerical sparse COO format matrix from the
 # bid data. Returns:
 #   - a numerical sparse matrix of (bidder, auction) = bids
@@ -335,6 +360,24 @@ def filter_non_interacting(bidders, bidder2id, labels):
     print("Filtered %s bidders." % count_filtered)
 
     return (np.array(filtered_bidders), np.array(filtered_labels))
+
+###############################################################################
+# A helper method to filter out test bidders that do not appear in the auction
+# data. Replaces those bidders with a dummy duplicate bidder (for submission
+# compatibility).
+###############################################################################
+def filter_replace_test(bidders, bidder2id, id2bidder):
+    filtered_test_bidders = []
+    count_filtered = 0
+    for i in bidders:
+        if (i in bidder2id):
+            filtered_test_bidders.append(i)
+        else:
+            filtered_test_bidders.append(id2bidder[0])
+            count_filtered = count_filtered + 1
+    print("Filtered %s bidders." % count_filtered)
+
+    return (np.array(filtered_bidders))
 
 ###############################################################################
 # Calls main when class is directly invoked.
